@@ -24,7 +24,8 @@ import {
   ChefHat,
   Utensils,
   Loader2,
-  Palette
+  Palette,
+  Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -63,6 +64,7 @@ interface Toast {
 const STORAGE_KEY_FOOD = 'smart_home_food_items';
 const STORAGE_KEY_HOUSEHOLD = 'smart_home_household_items';
 const STORAGE_KEY_LAST_BRIEFING = 'smart_home_last_briefing_date';
+const STORAGE_KEY_API_KEY = 'smart_home_user_api_key';
 
 const CATEGORIES = {
   food: ['蔬菜', '水果', '肉類', '海鮮', '乳製品', '零食', '飲料', '調味料', '其他'],
@@ -229,6 +231,8 @@ export default function App() {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('smart_home_theme') || 'indigo');
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem(STORAGE_KEY_API_KEY) || '');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   // --- Theme Persistence & Application ---
   useEffect(() => {
@@ -248,6 +252,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_HOUSEHOLD, JSON.stringify(householdItems));
   }, [householdItems]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_API_KEY, userApiKey);
+  }, [userApiKey]);
 
   // --- Toast Logic ---
   const addToast = (message: string, type: Toast['type'] = 'success') => {
@@ -476,7 +484,7 @@ export default function App() {
         "en": "Simple English Markdown content"
       }`;
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: userApiKey || process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
@@ -538,6 +546,63 @@ export default function App() {
             <h1 className="font-bold text-xl tracking-tight">全能智能管家</h1>
           </div>
           <div className="flex items-center gap-2">
+            <div className="relative">
+              <button 
+                onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                className={`p-2 rounded-full transition-all ${showApiKeyInput ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:bg-slate-100'}`}
+                title="設定 API Key"
+              >
+                <Key className="w-5 h-5" />
+              </button>
+              
+              <AnimatePresence>
+                {showApiKeyInput && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowApiKeyInput(false)} 
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gemini API Key</span>
+                          <a 
+                            href="https://aistudio.google.com/app/apikey" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-brand-600 hover:underline font-bold"
+                          >
+                            獲取金鑰
+                          </a>
+                        </div>
+                        <input 
+                          type="password" 
+                          placeholder="輸入您的 API Key..." 
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                          value={userApiKey}
+                          onChange={(e) => setUserApiKey(e.target.value)}
+                        />
+                        <p className="text-[10px] text-slate-400 leading-tight">
+                          您的 API Key 將儲存在本地瀏覽器中，僅用於生成食譜。
+                        </p>
+                        <button 
+                          onClick={() => setShowApiKeyInput(false)}
+                          className="w-full py-2 bg-brand-600 text-white rounded-xl text-xs font-bold hover:bg-brand-700 transition-all"
+                        >
+                          完成
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="relative">
               <button 
                 onClick={() => setShowThemePicker(!showThemePicker)}
