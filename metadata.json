@@ -1,0 +1,5 @@
+{
+  "name": "Remix: 全能智能管家 (Smart Home Manager)",
+  "description": "智能家居管理系統，具備食材過期提醒、日用品庫存監控及每日晨報功能。",
+  "requestFramePermissions": []
+}
